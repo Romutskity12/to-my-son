@@ -588,14 +588,25 @@
   tag.src = 'https://www.youtube.com/iframe_api';
   document.head.appendChild(tag);
 
-  var ytPlayer, musicStarted = false, muted = false, playerReady = false;
+  var ytPlayer, musicStarted = false, muted = false, playerReady = false, pendingPlay = false;
 
   function onYouTubeIframeAPIReady() {
     ytPlayer = new YT.Player('ytplayer', {
       height: '1', width: '1',
       videoId: 'kPa7bsKwL-c',
       playerVars: { autoplay:0, controls:0, disablekb:1, fs:0, iv_load_policy:3, modestbranding:1, rel:0 },
-      events: { onReady: function() { playerReady = true; } }
+      events: {
+        onReady: function() {
+          playerReady = true;
+          // Если пользователь уже нажал — запускаем сразу
+          if (pendingPlay && !musicStarted) {
+            ytPlayer.setVolume(40);
+            ytPlayer.playVideo();
+            musicStarted = true;
+            document.getElementById('musicBtn').classList.add('playing');
+          }
+        }
+      }
     });
   }
 
@@ -606,6 +617,9 @@
       ytPlayer.playVideo();
       musicStarted = true;
       document.getElementById('musicBtn').classList.add('playing');
+    } else {
+      // Плеер ещё не загрузился — попробуем как только будет готов
+      pendingPlay = true;
     }
   }
 
@@ -641,7 +655,7 @@
 
   function openFolder() {
     goTo('s2');
-    setTimeout(startMusic, 1000);
+    startMusic(); // прямой вызов — мобильный браузер принимает только это
   }
 
   function openLetter(i) {
